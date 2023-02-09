@@ -1,0 +1,7 @@
+*.tgz
+.coverage-data/
+.vscode/
+coverage/
+dist/
+native/build/
+node_modules/

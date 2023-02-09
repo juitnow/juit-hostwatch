@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "lib": [ "es2022", "webworker" ],
+    "target": "es2022",
+    "module": "node16",
+    "moduleResolution": "node",
+    "types": [ "node" ],
+    "esModuleInterop": true,
+
+    "rootDir": ".",
+
+    "noEmit": true,
+
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+  },
+  "include": [
+    "src",
+    // "build.ts",
+  ],
+  "files": [
+    "build.ts",
+  ]
+}
