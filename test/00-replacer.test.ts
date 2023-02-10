@@ -116,6 +116,20 @@ describe('Replacer', () => {
     })
   })
 
+  it('should set variables while parsing an object', async () => {
+    expect(await new Replacer().replace({
+      one: 1,
+      two: true,
+      three: '{{one}}/{{two}}',
+      four: 'hello, "{{one}}/{{two}}/{{three}}"',
+    }, true)).toEqual({
+      one: 1,
+      two: true,
+      three: '1/true',
+      four: 'hello, "1/true/1/true"',
+    })
+  })
+
   /* ======================================================================== */
 
   it('should fail replacing unknown local variables', async () => {
@@ -151,5 +165,12 @@ describe('Replacer', () => {
     const replacer = new Replacer()
     expect(() => replacer.setVariable('foo:bar', 1)).toThrowError(TypeError, 'Invalid variable name "foo:bar"')
     expect(() => replacer.setVariable('FOO BAR', 1)).toThrowError(TypeError, 'Invalid variable name "FOO BAR"')
+  })
+
+  it('should not set variables from nested object', async () => {
+    await expectAsync(new Replacer().replace({
+      one: { two: 3 },
+      four: '{{ two }}',
+    }, true)).toBeRejectedWithError(TypeError, 'Unknown local variable "two"')
   })
 })
