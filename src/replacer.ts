@@ -1,5 +1,6 @@
 export class Replacer {
   private readonly _env: Readonly<Record<string, string>>
+  private readonly _ec2: Record<string, string> = {}
   private readonly _vars: Record<string, any> = {}
 
   constructor() {
@@ -54,28 +55,25 @@ export class Replacer {
         throw new TypeError(`Unknown environment variable "${name}"`)
       }
 
+      // coverage ignore next
+      // see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html
+      case 'ec2':
+        if (expr in this._ec2) return this._ec2[expr]
+        try {
+          const response = await fetch(`http://169.254.169.254/latest/meta-data/${expr}`)
+          if (response.status !== 200) throw new Error(`Wrong status: ${response.status}`)
+          return this._ec2[expr] = await response.text()
+        } catch (error: any) {
+          throw new Error(`Error getting EC2 metadata for "${expr}"`, { cause: error })
+        }
+
       default: {
         throw new TypeError(`Unsupported type "${type}" in expression "${expr}"`)
       }
     }
-
-
-    // // Evaluate "ec2:..."
-    // for (let match = expr.match(/^ec2[\t ]*:[\t ]*(.+)$/); match != null; match = null) {
-    //   try {
-    //     const response = await fetch(`http://169.254.169.254/latest/meta-data/${expr}`)
-    //     if (response.status !== 200) throw new Error(`Wrong status: ${response.status}`)
-    //     return await response.text()
-    //   } catch (error: any) {
-    //     throw new Error(`Error getting EC2 metadata for "${expr}"`, { cause: error })
-    //   }
-    // }
-
-    // // Definitely unknown...
-    // throw new TypeError(`Uknown/unsupported expression "${expr}"`)
   }
 
-  async replace(value: any): Promise<any> {
+  async replace(value: any, setVariables = false): Promise<any> {
     if (typeof value === 'string') {
       for (let match = value.match(/^{{([\w\t /:-]+)}}$/); match != null; match = null) {
         return await this.getReplacement(match[1])
@@ -103,6 +101,7 @@ export class Replacer {
       } else {
         for (const k in value) {
           value[k] = await this.replace(value[k])
+          if (setVariables) this._vars[k] = value[k]
         }
       }
     }
