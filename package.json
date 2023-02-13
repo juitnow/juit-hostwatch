@@ -1,16 +1,17 @@
 {
   "scripts": {
-    "build": "plug"
+    "build": "plug",
+    "dev": "plug -w test -w src"
   },
   "devDependencies": {
     "@plugjs/build": "^0.1.0"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.267.0",
-    "@aws-sdk/credential-providers": "^3.266.1",
+    "@aws-sdk/credential-providers": "^3.267.0",
     "@juit/lib-ping": "file:../juit-lib-ping/juit-lib-ping-1.0.0.tgz",
     "@juit/lib-statvfs": "file:../juit-lib-statvfs/juit-lib-statvfs-1.0.0.tgz",
-    "justus": "^0.0.7",
+    "justus": "^0.1.4",
     "yaml": "^2.2.1"
   }
 }
