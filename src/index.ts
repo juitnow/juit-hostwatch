@@ -37,7 +37,6 @@ export enum Unit {
   Megabytes_Second = 'Megabytes/Second',
   Gigabytes_Second = 'Gigabytes/Second',
   Terabytes_Second = 'Terabytes/Second',
-
 }
 
 export interface Metric {
@@ -48,6 +47,4 @@ export interface Metric {
   dimensions: Record<string, string>,
 }
 
-export type Sink =
-  & ((error: null, metric: Metric) => void)
-  & ((error: Error, metric?: undefined) => void)
+export type Sink = (metric: Metric) => void

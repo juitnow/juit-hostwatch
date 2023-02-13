@@ -31,9 +31,11 @@ export class PingProbe extends AbstractProbe<typeof metrics, typeof validator> {
   async init(config: InferValidation<typeof validator>): Promise<void> {
     const { to, ...options } = config
 
-    console.log('CREATING PINGER', to, options)
+    this.log.debug(`Crating pinger to "${to}":`, options)
 
     this._pinger = await createPinger(to, options)
+    this._pinger.on('pong', (ms) => this.log.trace(`Pong from "${to}"`, ms, 'ms'))
+    this._pinger.on('error', (err) => this.log.error(`Error pinging "${to}"`, err))
     this._pinger.start()
   }
 

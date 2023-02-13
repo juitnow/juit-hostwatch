@@ -1,5 +1,8 @@
 import { arrayOf, object, objectOf, optional, string, validate } from 'justus'
 
+import { logger } from './logger'
+
+import type { Logger } from './logger'
 import type { Validation, InferValidation } from 'justus'
 import type { Sink, Unit } from './index'
 
@@ -25,12 +28,14 @@ export abstract class AbstractProbe<
   private readonly _validator: V
   private readonly _dimensions: Record<string, string>
 
+  private _log: Logger
   private _name: string
   private _publishing: Set<string>
   private _sampling: boolean = false
 
   constructor(name: string, metrics: Metrics, validator: V) {
     this._name = name
+    this._log = logger(`probe:${name}`)
     this._metrics = metrics
     this._validator = validator
     this._publishing = new Set(Object.keys(metrics))
@@ -41,6 +46,10 @@ export abstract class AbstractProbe<
     }
   }
 
+  protected get log(): Logger {
+    return this._log
+  }
+
   poll(sink: Sink): void {
     if (this._sampling) return
     this._sampling = true
@@ -48,7 +57,6 @@ export abstract class AbstractProbe<
     setImmediate(async () => {
       try {
         const metrics = await this.sample()
-        console.log('GOTTEN', metrics)
 
         for (const [ name, value ] of Object.entries(metrics)) {
           // Strip metrics with no valid numerical value
@@ -60,12 +68,13 @@ export abstract class AbstractProbe<
             const dimensions = { ...this._dimensions }
             const unit = this._metrics[name]
 
-            sink(null, { name, unit, value, timestamp, dimensions })
+            this.log.debug(`Sinking metric "${name}"`, value, `(${unit})`)
+
+            sink({ name, unit, value, timestamp, dimensions })
           }
         }
-      } catch (cause: any) {
-        const error = new Error(`Error polling "${this._name}"`, { cause })
-        sink(error)
+      } catch (error: any) {
+        this.log.error(`Error polling "${this._name}"`, error)
       } finally {
         this._sampling = false
       }
@@ -74,8 +83,8 @@ export abstract class AbstractProbe<
 
   configure(configuration: any): Promise<void> {
     const {
+      name,
       config,
-      name = this._name,
       publish = Object.keys(this._metrics),
       dimensions = this._dimensions,
     } = validate(object({
@@ -86,7 +95,10 @@ export abstract class AbstractProbe<
     }), configuration)
 
     // Set the name of this probe
-    this._name = name
+    if (name) {
+      this._log = logger(`probe:${name}`)
+      this._name = name
+    }
 
     // Check the metrics to publish
     if (publish.length === 0) {

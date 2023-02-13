@@ -1,12 +1,16 @@
 import { parse } from './config'
 import { PingProbe } from './probes/ping'
+import { logger } from './logger'
 
 import type { Metric, Sink } from '.'
 import type { Probe } from './probe'
 
+const log = logger('main')
+logger.logLevel = 'TRACE'
+
 async function main(file: string): Promise<void> {
   const { config, dimensions, probes, sinks } = await parse(file)
-  console.log({ config, dimensions, probes, sinks })
+  void config, dimensions, sinks
 
   const probeInstances: Probe[] = []
   for (const probeOptions of probes) {
@@ -22,8 +26,8 @@ async function main(file: string): Promise<void> {
     probeInstances.push(instance)
   }
 
-  const sink: Sink = (error: Error | null, metric?: Metric) => {
-    console.log('SINKING', error, metric)
+  const sink: Sink = (metric: Metric) => {
+    log.trace('Sinking', metric)
   }
 
   setInterval(() => {
@@ -31,4 +35,4 @@ async function main(file: string): Promise<void> {
   }, 10000)
 }
 
-main('./config.yml').catch(console.error)
+main('./config.yml').catch(log.fatal)
