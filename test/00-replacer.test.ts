@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string */
 import { Replacer } from '../src/replacer'
 
 describe('Replacer', () => {
@@ -8,23 +9,23 @@ describe('Replacer', () => {
     replacer.setVariable('aBoolean', true)
 
     expect(await replacer.replace({
-      theFullString: '{{aString}}',
-      theFullNumber: '{{aNumber}}',
-      theFullBoolean: '{{aBoolean}}',
+      theFullString: '${aString}',
+      theFullNumber: '${aNumber}',
+      theFullBoolean: '${aBoolean}',
 
-      theFullStringExtended: '{{ ASTRING }}',
-      theFullNumberExtended: '{{ ANUMBER }}',
-      theFullBooleanExtended: '{{ ABOOLEAN }}',
+      theFullStringExtended: '${ ASTRING }',
+      theFullNumberExtended: '${ ANUMBER }',
+      theFullBooleanExtended: '${ ABOOLEAN }',
 
-      thePartialString: '[[>{{aString}}<]]',
-      thePartialNumber: '[[>{{aNumber}}<]]',
-      thePartialBoolean: '[[>{{aBoolean}}<]]',
+      thePartialString: '[[>${aString}<]]',
+      thePartialNumber: '[[>${aNumber}<]]',
+      thePartialBoolean: '[[>${aBoolean}<]]',
 
-      thePartialStringExtended: '[[>{{ ASTRING }}<]]',
-      thePartialNumberExtended: '[[>{{ ANUMBER }}<]]',
-      thePartialBooleanExtended: '[[>{{ ABOOLEAN }}<]]',
+      thePartialStringExtended: '[[>${ ASTRING }<]]',
+      thePartialNumberExtended: '[[>${ ANUMBER }<]]',
+      thePartialBooleanExtended: '[[>${ ABOOLEAN }<]]',
 
-      combined: '{{aString}}{{ ANUMBER }}{{ABOOLEAN}}',
+      combined: '${aString}${ ANUMBER }${ABOOLEAN}',
     })).toEqual({
       theFullString: 'myString',
       theFullNumber: 123,
@@ -43,7 +44,7 @@ describe('Replacer', () => {
   })
 
   it('should replace environment variables', async () => {
-    expect(await new Replacer().replace('>>{{env:path}}<<'))
+    expect(await new Replacer().replace('>>${env:path}<<'))
         .toEqual(`>>${process.env.PATH}<<`)
   })
 
@@ -60,15 +61,15 @@ describe('Replacer', () => {
     replacer.setVariable('theBooleanNumberExtended', ' 0b0 ')
 
     expect(await replacer.replace({
-      theNumber: '{{num:theNumber}}',
-      theHexNumber: '{{num:theHexNumber}}',
-      theOctalNumber: '{{num:theOctalNumber}}',
-      theBooleanNumber: '{{num:theBooleanNumber}}',
-      theExponentNumber: '{{num:theExponentNumber}}',
-      theNumberExtended: '{{number:theNumberExtended}}',
-      theHexNumberExtended: '{{number:theHexNumberExtended}}',
-      theOctalNumberExtended: '{{number:theOctalNumberExtended}}',
-      theBooleanNumberExtended: '{{number:theBooleanNumberExtended}}',
+      theNumber: '${num:theNumber}',
+      theHexNumber: '${num:theHexNumber}',
+      theOctalNumber: '${num:theOctalNumber}',
+      theBooleanNumber: '${num:theBooleanNumber}',
+      theExponentNumber: '${num:theExponentNumber}',
+      theNumberExtended: '${number:theNumberExtended}',
+      theHexNumberExtended: '${number:theHexNumberExtended}',
+      theOctalNumberExtended: '${number:theOctalNumberExtended}',
+      theBooleanNumberExtended: '${number:theBooleanNumberExtended}',
     })).toEqual({
       theNumber: 123.456,
       theHexNumber: 65535,
@@ -88,10 +89,10 @@ describe('Replacer', () => {
     replacer.setVariable('theFalse', 'FALSE')
 
     expect(await replacer.replace({
-      theTrue: '{{ boolean:theTrue }}',
-      theFalse: '{{ bool:theFalse }}',
-      theTrueNumber: '{{ number:boolean:theTrue }}',
-      theFalseNumber: '{{ num:bool:theFalse }}',
+      theTrue: '${ boolean:theTrue }',
+      theFalse: '${ bool:theFalse }',
+      theTrueNumber: '${ number:boolean:theTrue }',
+      theFalseNumber: '${ num:bool:theFalse }',
     })).toEqual({
       theTrue: true,
       theFalse: false,
@@ -104,12 +105,12 @@ describe('Replacer', () => {
     const replacer = new Replacer()
     replacer.setVariable('one', '1')
     replacer.setVariable('two', '2')
-    replacer.setVariable('arr', [ '{{num:one}}', '{{num:two}}' ])
-    replacer.setVariable('obj', { '_1': '{{num:one}}', '_2': '{{num:two}}' })
+    replacer.setVariable('arr', [ '${num:one}', '${num:two}' ])
+    replacer.setVariable('obj', { '_1': '${num:one}', '_2': '${num:two}' })
 
     expect(await replacer.replace({
-      '_arr': '{{arr}}',
-      '_obj': '{{obj}}',
+      '_arr': '${arr}',
+      '_obj': '${obj}',
     })).toEqual({
       _arr: [ 1, 2 ],
       _obj: { _1: 1, _2: 2 },
@@ -120,8 +121,8 @@ describe('Replacer', () => {
     expect(await new Replacer().replace({
       one: 1,
       two: true,
-      three: '{{one}}/{{two}}',
-      four: 'hello, "{{one}}/{{two}}/{{three}}"',
+      three: '${one}/${two}',
+      four: 'hello, "${one}/${two}/${three}"',
     }, true)).toEqual({
       one: 1,
       two: true,
@@ -133,31 +134,31 @@ describe('Replacer', () => {
   /* ======================================================================== */
 
   it('should fail replacing unknown local variables', async () => {
-    await expectAsync(new Replacer().replace('{{nope}}'))
+    await expectAsync(new Replacer().replace('${nope}'))
         .toBeRejectedWithError(TypeError, 'Unknown local variable "nope"')
   })
 
   it('should fail replacing unknown environment variables', async () => {
-    await expectAsync(new Replacer().replace('{{env:__fail_you_miserable_git__}}'))
+    await expectAsync(new Replacer().replace('${env:__fail_you_miserable_git__}'))
         .toBeRejectedWithError(TypeError, 'Unknown environment variable "__fail_you_miserable_git__"')
   })
 
   it('should fail converting invalid numbers', async () => {
     const replacer = new Replacer()
     replacer.setVariable('theNumber', 'hello!')
-    await expectAsync(replacer.replace('{{num:theNumber}}'))
+    await expectAsync(replacer.replace('${num:theNumber}'))
         .toBeRejectedWithError(TypeError, 'Invalid number in expression "num:theNumber" (value=hello!)')
   })
 
   it('should fail converting invalid booleans', async () => {
     const replacer = new Replacer()
     replacer.setVariable('theBoolean', 'hello!')
-    await expectAsync(replacer.replace('{{bool:theBoolean}}'))
+    await expectAsync(replacer.replace('${bool:theBoolean}'))
         .toBeRejectedWithError(TypeError, 'Invalid boolean in expression "bool:theBoolean" (value=hello!)')
   })
 
   it('should fail converting unsupported expressions', async () => {
-    await expectAsync(new Replacer().replace('{{ foo : bar}}'))
+    await expectAsync(new Replacer().replace('${ foo : bar}'))
         .toBeRejectedWithError(TypeError, 'Unsupported type "foo" in expression "foo : bar"')
   })
 
@@ -170,7 +171,7 @@ describe('Replacer', () => {
   it('should not set variables from nested object', async () => {
     await expectAsync(new Replacer().replace({
       one: { two: 3 },
-      four: '{{ two }}',
+      four: '${ two }',
     }, true)).toBeRejectedWithError(TypeError, 'Unknown local variable "two"')
   })
 })
