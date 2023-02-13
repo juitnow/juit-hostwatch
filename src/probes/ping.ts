@@ -1,10 +1,10 @@
 import { createPinger } from '@juit/lib-ping'
 import { number, object, oneOf, optional, string } from 'justus'
 
-import { AbstractPoller } from '../poller'
+import { AbstractProbe } from '../probe'
 import { Unit } from '../index'
 
-import type { PollerData } from '../poller'
+import type { PollData } from '../probe'
 import type { InferValidation } from 'justus'
 import type { Pinger } from '@juit/lib-ping'
 
@@ -16,12 +16,12 @@ const metrics = {
 const validator = object({
   to: string({ minLength: 1 }),
   from: optional(string({ minLength: 1 })),
-  interval: optional(number({ minimum: 1000 })),
-  timeout: optional(number({ minimum: 1000 })),
+  interval: optional(number({ minimum: 1000, fromString: true })),
+  timeout: optional(number({ minimum: 1000, fromString: true })),
   protocol: optional(oneOf('ipv4', 'ipv6')),
 } as const)
 
-export class PingPoller extends AbstractPoller<typeof metrics, typeof validator> {
+export class PingProbe extends AbstractProbe<typeof metrics, typeof validator> {
   private _pinger?: Pinger
 
   constructor() {
@@ -31,12 +31,14 @@ export class PingPoller extends AbstractPoller<typeof metrics, typeof validator>
   async init(config: InferValidation<typeof validator>): Promise<void> {
     const { to, ...options } = config
 
+    console.log('CREATING PINGER', to, options)
+
     this._pinger = await createPinger(to, options)
     this._pinger.start()
   }
 
-  async sample(): Promise<PollerData<typeof metrics>> {
-    if (! this._pinger) throw new Error('PingPoller not initialized')
+  async sample(): Promise<PollData<typeof metrics>> {
+    if (! this._pinger) throw new Error('PingProbe not initialized')
 
     const stats = this._pinger.stats()
     if (stats.sent < 1) return {}

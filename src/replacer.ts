@@ -1,7 +1,7 @@
 export class Replacer {
   private readonly _env: Readonly<Record<string, string>>
   private readonly _ec2: Record<string, string> = {}
-  private readonly _vars: Record<string, any> = {}
+  private readonly _var: Record<string, any> = {}
 
   constructor() {
     this._env = Object.entries(process.env).reduce((env, [ key, value ]) => {
@@ -14,7 +14,7 @@ export class Replacer {
     if (! name.match(/^[\w-]+$/)) {
       throw new TypeError(`Invalid variable name "${name}"`)
     }
-    this._vars[name.toLowerCase()] = value
+    this._var[name.toLowerCase()] = value
   }
 
   async getReplacement(expr: string): Promise<string | number | boolean> {
@@ -24,7 +24,7 @@ export class Replacer {
 
     if (! _match) {
       const name = expr.toLowerCase()
-      if (name in this._vars) return this.replace(this._vars[name])
+      if (name in this._var) return this.replace(this._var[name])
       throw new TypeError(`Unknown local variable "${name}"`)
     }
 
@@ -75,11 +75,11 @@ export class Replacer {
 
   async replace(value: any, setVariables = false): Promise<any> {
     if (typeof value === 'string') {
-      for (let match = value.match(/^{{([\w\t /:-]+)}}$/); match != null; match = null) {
+      for (let match = value.match(/^\${([^}]+)}$/); match != null; match = null) {
         return await this.getReplacement(match[1])
       }
 
-      const expr = /{{([\w\t /:-]+)}}/g
+      const expr = /\${([^}]+)}/g
       let last = 0
       let result = ''
       let match = expr.exec(value)
@@ -101,7 +101,7 @@ export class Replacer {
       } else {
         for (const k in value) {
           value[k] = await this.replace(value[k])
-          if (setVariables) this._vars[k] = value[k]
+          if (setVariables) this._var[k] = value[k]
         }
       }
     }
