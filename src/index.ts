@@ -47,4 +47,31 @@ export interface Metric {
   dimensions: Record<string, string>,
 }
 
-export type Sink = (metric: Metric) => void
+export interface Component {
+  start(): void | Promise<void>
+  stop(): void | Promise<void>
+}
+
+export interface ProbeDefinition {
+  probe: string,
+  name?: string,
+  publish: string[],
+  dimensions: Readonly<Record<string, string>>,
+  config?: Readonly<Record<string, any>>,
+}
+
+export interface Probe extends Component {
+  init(def: ProbeDefinition, sink: Sink): void | Promise<void>
+  poll(): void
+}
+
+export interface SinkDefinition {
+  sink: string,
+  name?: string,
+  config?: Readonly<Record<string, any>>,
+}
+
+export interface Sink extends Component {
+  init(def: SinkDefinition): void | Promise<void>
+  sink(metric: Metric): void
+}

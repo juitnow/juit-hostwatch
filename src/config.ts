@@ -1,25 +1,41 @@
 import { readFile } from 'node:fs/promises'
 
-import { allowAdditionalProperties, arrayOf, object, objectOf, optional, string, validate } from 'justus'
+import { arrayOf, object, objectOf, optional, string, validate } from 'justus'
 import { parse as parseYaml } from 'yaml'
 
-import { Replacer } from './replacer'
 import { logger } from './logger'
+import { Replacer } from './replacer'
+
+import type { ProbeDefinition } from '.'
 
 const log = logger('config')
+
+const probeValidator = object({
+  probe: string({ minLength: 1 }),
+  name: optional(string({ minLength: 1 })),
+  publish: optional(arrayOf(string), []),
+  dimensions: optional(objectOf(string), {}),
+  config: optional(object),
+})
+
+const sinkValidator = object({
+  sink: string({ minLength: 1 }),
+  name: optional(string({ minLength: 1 })),
+  config: optional(object),
+})
 
 const configValidator = object({
   config: optional(object, {}),
   variables: optional(object, {}),
   dimensions: optional(objectOf(string), {}),
-  probes: arrayOf({ probe: string, ...allowAdditionalProperties }),
-  sinks: arrayOf({ sink: string, ...allowAdditionalProperties }),
+  probes: arrayOf(probeValidator),
+  sinks: arrayOf(sinkValidator),
 })
 
 interface ParsedConfig {
   config: Record<string, any>,
   dimensions: Record<string, string>,
-  probes: { probe: string, [ key: string ]: any }[],
+  probes: ProbeDefinition[],
   sinks: { sink: string, [ key: string ]: any }[],
 }
 
