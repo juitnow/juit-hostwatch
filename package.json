@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.267.0",
+    "@aws-sdk/client-sts": "^3.267.0",
     "@aws-sdk/credential-providers": "^3.267.0",
+    "@aws-sdk/types": "^3.267.0",
     "@juit/lib-ping": "file:../juit-lib-ping/juit-lib-ping-1.0.0.tgz",
     "@juit/lib-statvfs": "file:../juit-lib-statvfs/juit-lib-statvfs-1.0.0.tgz",
     "justus": "^0.1.4",
