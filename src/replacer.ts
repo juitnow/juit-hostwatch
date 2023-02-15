@@ -1,6 +1,8 @@
+/** EC2 data is fetched only once, for all Replacers */
+const _metaDataEc2: Record<string, string> = {}
+
 export class Replacer {
   private readonly _env: Readonly<Record<string, string>>
-  private readonly _ec2: Record<string, string> = {}
   private readonly _var: Record<string, any> = {}
 
   constructor() {
@@ -58,11 +60,14 @@ export class Replacer {
       // coverage ignore next
       // see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html
       case 'ec2':
-        if (expr in this._ec2) return this._ec2[expr]
+        if (expr in _metaDataEc2) return _metaDataEc2[expr]
         try {
-          const response = await fetch(`http://169.254.169.254/latest/meta-data/${expr}`)
-          if (response.status !== 200) throw new Error(`Wrong status: ${response.status}`)
-          return this._ec2[expr] = await response.text()
+          const from = `http://169.254.169.254/latest/meta-data/${expr}`
+          const response = await fetch(from)
+          if (response.status !== 200) {
+            throw new Error(`Error fetching ${from} (status=${response.status})`)
+          }
+          return _metaDataEc2[expr] = await response.text()
         } catch (error: any) {
           throw new Error(`Error getting EC2 metadata for "${expr}"`, { cause: error })
         }
