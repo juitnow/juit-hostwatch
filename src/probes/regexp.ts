@@ -6,7 +6,6 @@ import { array, object, oneOf, optional, string, url } from 'justus'
 import { units } from '..'
 import { AbstractProbe } from './abstract'
 
-import type { InferValidation } from 'justus'
 import type { PollData, ProbeMetrics } from './abstract'
 
 const expressionValidator = oneOf(
@@ -19,7 +18,7 @@ const expressionValidator = oneOf(
 
 const metricValidator = object({
   name: string({ minLength: 1 }),
-  unit: optional(oneOf(units[0], ...units.slice(1)), 'None'),
+  unit: optional(oneOf(...units), 'None'),
   expr: oneOf(
       string({ minLength: 1 }),
       array({ items: expressionValidator, minItems: 1 }),
@@ -32,15 +31,13 @@ const validator = object({
 })
 
 export class RegExpProbe extends AbstractProbe<ProbeMetrics, typeof validator> {
-  private _config?: InferValidation<typeof validator>
-
   constructor() {
     super('regex', {}, validator)
   }
 
-  protected configure(config: InferValidation<typeof validator>): void {
-    this._config = config
-    for (const { name, unit } of config.metrics) {
+  protected configure(def: { name?: string | undefined; config?: any }): void {
+    super.configure(def)
+    for (const { name, unit } of this.configuration.metrics) {
       this.metrics[name] = unit
     }
   }
@@ -50,9 +47,9 @@ export class RegExpProbe extends AbstractProbe<ProbeMetrics, typeof validator> {
   }
 
   protected async sample(): Promise<PollData<ProbeMetrics>> {
-    if (! this._config) throw new Error('RegexProbe not initialized')
+    if (! this.configuration) throw new Error('RegexProbe not initialized')
 
-    const { source, metrics } = this._config
+    const { source, metrics } = this.configuration
 
     let data: string
     if (source.protocol === 'file:') {
