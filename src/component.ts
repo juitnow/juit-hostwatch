@@ -5,8 +5,8 @@ import { validate } from 'justus'
 import { logger } from './logger'
 
 import type { InferValidation, Validation } from 'justus'
-import type { Component, Metric, Probe, Sink } from './index'
 import type { Logger } from './logger'
+import type { Component, Metric, Probe, Sink } from './types'
 
 
 export abstract class AbstractComponent<V extends Validation> {

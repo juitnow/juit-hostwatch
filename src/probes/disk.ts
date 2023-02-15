@@ -4,7 +4,7 @@ import { statvfs } from '@juit/lib-statvfs'
 import { object, optional, string } from 'justus'
 
 
-import { Unit } from '..'
+import { Unit } from '../types'
 import { AbstractProbe, percentBig } from './abstract'
 
 import type { PollData } from './abstract'

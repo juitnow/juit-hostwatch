@@ -1,8 +1,8 @@
 import { createPinger } from '@juit/lib-ping'
 import { object, oneOf, optional, string } from 'justus'
 
-import { Unit } from '../index'
 import { millis } from '../seconds'
+import { Unit } from '../types'
 import { AbstractProbe, percent } from './abstract'
 
 import type { Pinger } from '@juit/lib-ping'

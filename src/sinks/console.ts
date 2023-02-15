@@ -2,7 +2,7 @@ import { never } from 'justus'
 
 import { AbstractSink } from './abstract'
 
-import type { Metric } from '..'
+import type { Metric } from '../types'
 
 export class ConsoleSink extends AbstractSink<typeof never> {
   constructor() {

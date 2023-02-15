@@ -1,7 +1,7 @@
 import { AbstractComponent } from '../component'
 
 import type { Validation } from 'justus'
-import type { Probe, ProbeDefinition, Sink, Unit } from '../index'
+import type { Probe, ProbeDefinition, Sink, Unit } from '../types'
 
 export interface ProbeMetrics {
   [ k: string ]: Unit

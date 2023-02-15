@@ -1,7 +1,7 @@
 import { AlcatelClient } from '@juit/lib-tcl-router'
 import { object, optional, string } from 'justus'
 
-import { Unit } from '..'
+import { Unit } from '../types'
 import { AbstractProbe } from './abstract'
 
 import type { PollData } from './abstract'

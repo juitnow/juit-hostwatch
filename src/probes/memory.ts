@@ -2,7 +2,7 @@ import { freemem, totalmem } from 'node:os'
 
 import { never } from 'justus'
 
-import { Unit } from '..'
+import { Unit } from '../types'
 import { AbstractProbe, percent } from './abstract'
 
 import type { PollData } from './abstract'

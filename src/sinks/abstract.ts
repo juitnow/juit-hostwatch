@@ -1,7 +1,7 @@
 import { AbstractComponent } from '../component'
 
 import type { Validation } from 'justus'
-import type { Metric, Sink, SinkDefinition } from '..'
+import type { Metric, Sink, SinkDefinition } from '../types'
 
 export abstract class AbstractSink<V extends Validation> extends AbstractComponent<V> implements Sink {
   protected constructor(name: string, validation: V) {

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 import { array, object, oneOf, optional, string, url } from 'justus'
 
-import { units } from '..'
+import { units } from '../types'
 import { AbstractProbe } from './abstract'
 
 import type { PollData, ProbeMetrics } from './abstract'

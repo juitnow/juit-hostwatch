@@ -13,7 +13,7 @@ import { RegExpProbe } from './probes/regexp'
 import { CloudWatchSink } from './sinks/cloudwatch'
 import { ConsoleSink } from './sinks/console'
 
-import type { Component, HostWatchDefinition, Probe, Sink } from './index'
+import type { Component, HostWatchDefinition, Probe, Sink } from './types'
 
 // our state: probes, sinks and poller interval
 interface HostWatchState {

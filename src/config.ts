@@ -7,7 +7,7 @@ import { logger, logLevels } from './logger'
 import { Replacer } from './replacer'
 import { millis } from './seconds'
 
-import type { HostWatchDefinition } from '.'
+import type { HostWatchDefinition } from './types'
 
 const log = logger('config')
 

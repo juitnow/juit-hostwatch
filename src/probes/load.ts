@@ -2,7 +2,7 @@ import { cpus, loadavg } from 'node:os'
 
 import { never } from 'justus'
 
-import { Unit } from '..'
+import { Unit } from '../types'
 import { AbstractProbe } from './abstract'
 
 import type { PollData } from './abstract'

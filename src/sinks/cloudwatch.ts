@@ -4,12 +4,12 @@ import { fromEnv, fromInstanceMetadata } from '@aws-sdk/credential-providers'
 import { boolean, number, object, optional, string } from 'justus'
 
 import { Replacer } from '../replacer'
-import { AbstractSink } from './abstract'
 import { millis } from '../seconds'
+import { AbstractSink } from './abstract'
 
 import type { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import type { AwsCredentialIdentityProvider } from '@aws-sdk/types'
-import type { Metric } from '..'
+import type { Metric } from '../types'
 
 
 const validator = object({
