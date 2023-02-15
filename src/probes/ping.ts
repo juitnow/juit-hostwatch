@@ -30,7 +30,7 @@ export class PingProbe extends AbstractProbe<typeof metrics, typeof validator> {
     super('ping', metrics, validator)
   }
 
-  configure(config: InferValidation<typeof validator>): void {
+  protected configure(config: InferValidation<typeof validator>): void {
     const { to, ...conf } = config
     this._to = to
     this._conf = conf
@@ -53,7 +53,7 @@ export class PingProbe extends AbstractProbe<typeof metrics, typeof validator> {
     await this._pinger.close()
   }
 
-  async sample(): Promise<PollData<typeof metrics>> {
+  protected async sample(): Promise<PollData<typeof metrics>> {
     if (! this._pinger) throw new Error('PingProbe not initialized')
 
     const { sent, received, latency } = this._pinger.stats()
