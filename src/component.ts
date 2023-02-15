@@ -12,6 +12,7 @@ import type { Logger } from './logger'
 export abstract class AbstractComponent<V extends Validation> {
   private readonly _type: string
   private readonly _validation: V
+  private _config?: InferValidation<V>
   private _name: string
   private _log: Logger
 
@@ -32,26 +33,25 @@ export abstract class AbstractComponent<V extends Validation> {
     return this._log
   }
 
-  protected initialize(def: { name?: string, config?: any }): void {
+  get configuration(): InferValidation<V> {
+    if (! this._config) throw new Error(`Probe "${this._name}" not configured`)
+    return this._config
+  }
+
+  protected configure(def: { name?: string, config?: any }): void {
     if (def.name) {
       this._log = logger(`${this._type}:${def.name}`)
       this._name = def.name
     }
 
-    const config = validate(this._validation, def.config)
-    return this.configure(config)
+    this._config = validate(this._validation, def.config)
   }
 
-  protected configure(config: InferValidation<V>): void {
-    // empty, just for overrides
-    void config
-  }
-
-  start(): void {
+  start(): void | Promise<void> {
     // empty, just for overrides
   }
 
-  stop(): void {
+  stop(): void | Promise<void> {
     // empty, just for overrides
   }
 }
