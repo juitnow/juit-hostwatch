@@ -1,14 +1,21 @@
 import { readFile } from 'node:fs/promises'
 
-import { arrayOf, object, objectOf, optional, string, validate } from 'justus'
+import { arrayOf, boolean, number, object, objectOf, oneOf, optional, string, validate } from 'justus'
 import { parse as parseYaml } from 'yaml'
 
-import { logger } from './logger'
+import { logger, logLevels } from './logger'
 import { Replacer } from './replacer'
 
-import type { ProbeDefinition } from '.'
+import type { Config, ProbeDefinition, SinkDefinition } from '.'
 
 const log = logger('config')
+
+const configValidator = object({
+  logLevel: optional(oneOf(...logLevels), logger.logLevel),
+  logTimes: optional(boolean({ fromString: true }), logger.logTimes),
+  logColors: optional(boolean({ fromString: true }), logger.logColors),
+  pollInterval: optional(number({ fromString: true, minimum: 1_000, maximum: 120_000 }), 45_000),
+})
 
 const probeValidator = object({
   probe: string({ minLength: 1 }),
@@ -24,32 +31,32 @@ const sinkValidator = object({
   config: optional(object),
 })
 
-const configValidator = object({
-  config: optional(object, {}),
+const validator = object({
+  config: optional(configValidator, {}),
   variables: optional(object, {}),
   dimensions: optional(objectOf(string), {}),
   probes: arrayOf(probeValidator),
   sinks: arrayOf(sinkValidator),
 })
 
-interface ParsedConfig {
-  config: Record<string, any>,
+export interface ParsedConfig {
+  config: Config,
   dimensions: Record<string, string>,
   probes: ProbeDefinition[],
-  sinks: { sink: string, [ key: string ]: any }[],
+  sinks: SinkDefinition[],
 }
 
 export async function parse(file: string): Promise<ParsedConfig> {
   const text = await readFile(file, 'utf-8')
   const data = parseYaml(text)
 
-  const { variables, ...options } = validate(configValidator, data)
+  const { variables, ...options } = validate(validator, data)
 
   const replacer = new Replacer()
   const vars = await replacer.replace(variables, true)
 
   const [ config, dimensions, probes, sinks ] = await Promise.all([
-    replacer.replace(options.config),
+    replacer.replace(options.config || validate(configValidator, {})),
     replacer.replace(options.dimensions),
     replacer.replace(options.probes),
     replacer.replace(options.sinks),
