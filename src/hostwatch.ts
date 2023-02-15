@@ -2,7 +2,6 @@ import { ValidationErrorBuilder } from 'justus'
 
 import { Probes, Sinks } from './component'
 import { parse } from './config'
-import { logger } from './logger'
 import { AlcatelRouterProbe } from './probes/alcatel'
 import { CPUProbe } from './probes/cpu'
 import { DiskProbe } from './probes/disk'
@@ -12,6 +11,7 @@ import { PingProbe } from './probes/ping'
 import { RegExpProbe } from './probes/regexp'
 import { CloudWatchSink } from './sinks/cloudwatch'
 import { ConsoleSink } from './sinks/console'
+import { logger } from './utils/logger'
 
 import type { Component, HostWatchDefinition, Probe, Sink } from './types'
 

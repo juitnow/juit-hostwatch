@@ -1,4 +1,4 @@
-import type { LogLevel } from './logger'
+import type { LogLevel } from './utils/logger'
 
 export const Unit = {
   // Simple units

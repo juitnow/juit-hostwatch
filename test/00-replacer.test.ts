@@ -1,5 +1,5 @@
 /* eslint-disable no-template-curly-in-string */
-import { Replacer } from '../src/replacer'
+import { Replacer } from '../src/utils/replacer'
 
 describe('Replacer', () => {
   it('should replace local variables', async () => {

@@ -2,11 +2,11 @@ import assert from 'node:assert'
 
 import { validate } from 'justus'
 
-import { logger } from './logger'
+import { logger } from './utils/logger'
 
 import type { InferValidation, Validation } from 'justus'
-import type { Logger } from './logger'
 import type { Component, Metric, Probe, Sink } from './types'
+import type { Logger } from './utils/logger'
 
 
 export abstract class AbstractComponent<V extends Validation> {

@@ -1,7 +1,7 @@
 import { ValidationError } from 'justus'
 
 import { HostWatch } from './hostwatch'
-import { logger } from './logger'
+import { logger } from './utils/logger'
 
 const log = logger('main')
 
