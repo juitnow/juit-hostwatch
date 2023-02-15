@@ -45,7 +45,7 @@ export type Unit = (typeof Unit)[keyof typeof Unit]
 
 export const units = Object.values(Unit)
 
-export interface Config {
+export interface Configuration {
   logLevel: LogLevel,
   logTimes: boolean,
   logColors: boolean,
@@ -87,4 +87,11 @@ export interface SinkDefinition {
 export interface Sink extends Component {
   init(def: SinkDefinition): void | Promise<void>
   sink(metric: Metric): void
+}
+
+export interface HostWatchDefinition {
+  config: Configuration,
+  dimensions: Record<string, string>,
+  probes: ProbeDefinition[],
+  sinks: SinkDefinition[],
 }
