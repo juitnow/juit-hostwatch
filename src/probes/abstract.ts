@@ -100,8 +100,8 @@ export abstract class AbstractProbe<
     this.log.debug(`Publishing ${this._publishing.size} metrics:`)
     this._publishing.forEach((m) => this.log.debug('-', m))
 
-    // A "null" diversion value is used to override a default dimension. If
-    // we encounter one, we simply strip it out
+    // An empty string dimension value is used to remove a default dimension
+    // from this proble. If we encounter an empty string, we strip it out!
     const dims: Record<string, string> = this._dimensions = {}
     Object.entries(dimensions).forEach(([ name, value ]) => {
       if (name && value) dims[name] = value

@@ -22,7 +22,7 @@ const probeValidator = object({
   probe: string({ minLength: 1 }),
   name: optional(string({ minLength: 1 })),
   publish: optional(arrayOf(string), []),
-  dimensions: optional(objectOf(oneOf(string, null)), {}),
+  dimensions: optional(objectOf(string), {}),
   config: optional(object),
 })
 
