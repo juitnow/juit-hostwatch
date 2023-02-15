@@ -1,12 +1,13 @@
+import { stat } from 'node:fs/promises'
+
 import { statvfs } from '@juit/lib-statvfs'
 import { object, optional, string } from 'justus'
+
 
 import { Unit } from '..'
 import { AbstractProbe, percentBig } from './abstract'
 
-import type { InferValidation } from 'justus'
 import type { PollData } from './abstract'
-
 
 const metrics = {
   DiskUsed: Unit.Gigabytes,
@@ -15,8 +16,8 @@ const metrics = {
 } as const
 
 const validator = optional(object({
-  disk: optional(string({ minLength: 1 }), '/'),
-} as const))
+  path: optional(string({ minLength: 1 }), '/'),
+} as const), {})
 
 export class DiskProbe extends AbstractProbe<typeof metrics, typeof validator> {
   private _disk: string
@@ -26,8 +27,12 @@ export class DiskProbe extends AbstractProbe<typeof metrics, typeof validator> {
     this._disk = '/'
   }
 
-  protected async configure(config: InferValidation<typeof validator>): Promise<void> {
-    if (config?.disk) this._disk = config.disk
+  async start(): Promise<void> {
+    if (this.configuration) this._disk = this.configuration.path
+
+    if ((await stat(this._disk)).isDirectory()) return
+
+    throw new Error(`Specified path "${this._disk}" is not a directory`)
   }
 
   protected async sample(): Promise<PollData<typeof metrics>> {
