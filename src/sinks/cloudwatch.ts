@@ -5,10 +5,10 @@ import { boolean, number, object, optional, string } from 'justus'
 
 import { Replacer } from '../replacer'
 import { AbstractSink } from './abstract'
+import { millis } from '../seconds'
 
 import type { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import type { AwsCredentialIdentityProvider } from '@aws-sdk/types'
-import type { InferValidation } from 'justus'
 import type { Metric } from '..'
 
 
@@ -22,9 +22,9 @@ const validator = object({
   // The batch size of metrics to send, the docs says 1000 max, but we're conservative
   batchSize: optional(number({ minimum: 1, maximum: 500, fromString: true }), 500),
   // Threshold after which a metric will be discarded, if it failed sending
-  retryThreshold: optional(number({ minimum: 1_000, maximum: 300_000, fromString: true }), 120_000),
+  retryThreshold: optional(millis({ minimum: 1_000, maximum: 300_000, defaultUnit: 'seconds' }), '2 min'),
   // Interval after which batches of metrics will be sent
-  interval: optional(number({ minimum: 10_000, maximum: 120_000, fromString: true }), 30_000),
+  interval: optional(millis({ minimum: 10_000, maximum: 120_000, defaultUnit: 'seconds' }), '30 sec'),
   // Access key, optional as we can also use credentials from EC2
   accessKeyId: optional(string({ minLength: 1 })),
   // Secret Access key, optional as we can also use credentials from EC2
@@ -39,31 +39,24 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
   private readonly _metrics: MetricDatum[] = []
   private _timeout: null | ReturnType<typeof setTimeout> = null
 
-  private _options?: InferValidation<typeof validator>
   private _client?: CloudWatch
 
   constructor() {
     super('cloudwatch', validator)
   }
 
-  configure(config: InferValidation<typeof validator>): void {
-    this._options = config
-  }
-
   async start(): Promise<void> {
-    if (! this._options) throw new Error('CloudWatch Sink not configured')
-
     let credentials: AwsCredentialIdentityProvider
-    let region: string | undefined = this._options.region ||
+    let region: string | undefined = this.configuration.region ||
                                      process.env.AWS_REGION ||
                                      process.env.AWS_DEFAULT_REGION
 
-    if (this._options.ec2Credentials === true) {
+    if (this.configuration.ec2Credentials === true) {
       credentials = fromInstanceMetadata()
       if (! region) region = await new Replacer().getReplacement('ec2:placement/region') as string
     } else {
-      if (this._options.accessKeyId) process.env.AWS_ACCESS_KEY_ID = this._options.accessKeyId
-      if (this._options.secretAccessKey) process.env.AWS_SECRET_ACCESS_KEY = this._options.secretAccessKey
+      if (this.configuration.accessKeyId) process.env.AWS_ACCESS_KEY_ID = this.configuration.accessKeyId
+      if (this.configuration.secretAccessKey) process.env.AWS_SECRET_ACCESS_KEY = this.configuration.secretAccessKey
       credentials = fromEnv()
     }
 
@@ -83,10 +76,14 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
   }
 
   sink(metric: Metric): void {
-    if (! this._options) throw new Error('CloudWatch Sink not configured')
+    if (! this.configuration) throw new Error('CloudWatch Sink not configured')
     if (! this._client) throw new Error('CloudWatch Client not initialized')
 
-    // Convert the metric to a CludWatch `MetricDatum` and buffer it
+    // Convert the metric to a CludWatch `MetricDatum` and buffer it. Here we
+    // don't aggregate multiple data points per minute, as CloudWatch will
+    // calculate the average for us, and keep track of minimum, maximum and
+    // number of samples sent for us.
+    // See https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/publishingMetrics.html#publishingDataPoints1
     const length = this._metrics.push({
       Timestamp: new Date(metric.timestamp),
       MetricName: metric.name,
@@ -99,8 +96,8 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     this.log.debug('Buffered', length, 'metrics')
 
     // If we reached the limit in our buffer, then immediately process
-    if (length >= this._options.bufferSize) {
-      this.log.debug(`Scheduling publication immedately (bufferSize=${this._options.bufferSize})`)
+    if (length >= this.configuration.bufferSize) {
+      this.log.debug(`Scheduling publication immedately (bufferSize=${this.configuration.bufferSize})`)
       setImmediate(() => this.publish())
       return
     }
@@ -109,12 +106,12 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     if (this._timeout != null) return
 
     // Schedule to process all buffered metrics in our interval time
-    this.log.debug('Scheduling publication in', this._options.interval, 'ms')
-    this._timeout = setTimeout(() => this.publish(), this._options.interval).unref()
+    this.log.debug('Scheduling publication in', this.configuration.interval, 'ms')
+    this._timeout = setTimeout(() => this.publish(), this.configuration.interval).unref()
   }
 
   private async publish(): Promise<void> {
-    if (! this._options) throw new Error('CloudWatch Sink not configured')
+    if (! this.configuration) throw new Error('CloudWatch Sink not configured')
     if (! this._client) throw new Error('CloudWatch Client not initialized')
 
     // First of all clear any timeout, so that `sink` can schedule a new one
@@ -123,22 +120,22 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
 
     // Process our metrics in batches
     while (this._metrics.length > 0) {
-      const batch = this._metrics.splice(0, this._options.batchSize)
+      const batch = this._metrics.splice(0, this.configuration.batchSize)
 
-      if (this._options.dryRun) {
+      if (this.configuration.dryRun) {
         this.log.warn('Dry run: metrics batch', batch)
       }
 
       try {
         await this._client.putMetricData({
-          Namespace: this._options.namespace,
+          Namespace: this.configuration.namespace,
           MetricData: batch,
         })
       } catch (error) {
         this.log.error('Error sending metrics to CloudWatch', error)
 
         // Re-buffer our metrics that are not past retry threshold
-        const threshold = Date.now() - this._options.retryThreshold
+        const threshold = Date.now() - this.configuration.retryThreshold
         for (const metric of batch) {
           if ((metric.Timestamp?.getTime() || 0) < threshold) continue
           this._metrics.push(metric)
