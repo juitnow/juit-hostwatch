@@ -26,11 +26,11 @@ export class DiskProbe extends AbstractProbe<typeof metrics, typeof validator> {
     this._disk = '/'
   }
 
-  async configure(config: InferValidation<typeof validator>): Promise<void> {
+  protected async configure(config: InferValidation<typeof validator>): Promise<void> {
     if (config?.disk) this._disk = config.disk
   }
 
-  async sample(): Promise<PollData<typeof metrics>> {
+  protected async sample(): Promise<PollData<typeof metrics>> {
     const {
       bytes_available: avail, // use "avail" (to non super users)
       bytes_total: total,
