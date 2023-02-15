@@ -2,8 +2,8 @@ import { createPinger } from '@juit/lib-ping'
 import { object, oneOf, optional, string } from 'justus'
 
 import { Unit } from '../index'
-import { AbstractProbe, percent } from './abstract'
 import { millis } from '../seconds'
+import { AbstractProbe, percent } from './abstract'
 
 import type { Pinger } from '@juit/lib-ping'
 import type { PollData } from './abstract'
@@ -36,6 +36,7 @@ export class PingProbe extends AbstractProbe<typeof metrics, typeof validator> {
 
     this._pinger.on('pong', (ms) => this.log.trace(`Pong from "${to}"`, ms, 'ms'))
     this._pinger.on('error', (err) => this.log.error(`Error pinging "${to}"`, err))
+    this._pinger.on('warning', (c, msg) => this.log.debug(`Ping warning (code=${c}): ${msg}`))
 
     this._pinger.start()
   }
