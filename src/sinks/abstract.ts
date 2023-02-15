@@ -9,7 +9,7 @@ export abstract class AbstractSink<V extends Validation> extends AbstractCompone
   }
 
   init(def: SinkDefinition): void | Promise<void> {
-    super.initialize(def)
+    super.configure(def)
   }
 
   abstract sink(metric: Metric): void
