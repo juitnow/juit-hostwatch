@@ -69,7 +69,7 @@ export interface ProbeDefinition {
   probe: string,
   name?: string,
   publish: string[],
-  dimensions: Readonly<Record<string, string>>,
+  dimensions: Readonly<Record<string, string | null>>,
   config?: Readonly<Record<string, any>>,
 }
 
