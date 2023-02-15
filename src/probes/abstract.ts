@@ -12,11 +12,10 @@ export type PollData<Metrics extends ProbeMetrics> = {
 }
 
 export abstract class AbstractProbe<
-  Metrics extends ProbeMetrics,
+  M extends ProbeMetrics,
   V extends Validation,
 > extends AbstractComponent<V> implements Probe {
-  // from constructor
-  private readonly _metrics: Metrics
+  protected readonly metrics: M
 
   // from init
   private _dimensions: Readonly<Record<string, string>> = {}
@@ -26,9 +25,9 @@ export abstract class AbstractProbe<
   // for poll
   private _sampling: boolean = false
 
-  protected constructor(name: string, metrics: Metrics, validation: V) {
+  protected constructor(name: string, metrics: M, validation: V) {
     super('probe', name, validation)
-    this._metrics = metrics
+    this.metrics = metrics
   }
 
   poll(): void {
@@ -55,7 +54,7 @@ export abstract class AbstractProbe<
           if (this._publishing.has(name)) {
             const timestamp = Date.now()
             const dimensions = { ...this._dimensions }
-            const unit = this._metrics[name]
+            const unit = this.metrics[name]
             this.log.trace('Sinking metric', name, '=>', value, `[${unit}]`)
             sink.sink({ name, unit, value, timestamp, dimensions })
           }
@@ -79,24 +78,33 @@ export abstract class AbstractProbe<
 
     // Metrics to publish as a set
     this._publishing = publish.length === 0 ?
-      this._publishing = new Set<string>(...Object.keys(this._metrics)) :
-      this._publishing = new Set<string>(...publish)
+      this._publishing = new Set<string>(Object.keys(this.metrics)) :
+      this._publishing = new Set<string>(publish)
 
     // Check each published metric
     for (const metric of publish) {
-      if (this._metrics[metric]) {
+      if (this.metrics[metric]) {
         this._publishing.add(metric)
         continue
       }
-      const extra = `\n  Known metrics:\n  - ${Object.keys(this._metrics).join('\n  - ')}`
+      const extra = `\n  Known metrics:\n  - ${Object.keys(this.metrics).join('\n  - ')}`
       throw new Error(`Unknown metric "${metric}" for probe "${this.name}".${extra}`)
     }
+
+    // Check that we're publishing at least one metric
+    if (this._publishing.size < 1) {
+      throw new Error(`No metrics published by probe "${this.name}".`)
+    }
+
+    // Log out the metrics we're going to publish
+    this.log.debug(`Publishing ${this._publishing.size} metrics:`)
+    this._publishing.forEach((m) => this.log.debug('-', m))
 
     // Merge dimensions
     this._dimensions = dimensions
   }
 
-  protected abstract sample(): PollData<Metrics> | Promise<PollData<Metrics>>
+  protected abstract sample(): PollData<M> | Promise<PollData<M>>
 }
 
 export function percent(value: number, total: number): number {
