@@ -1,0 +1,11 @@
+################################################################################
+# Environment variables for "hostwatch"
+#
+# Any variable listed here will be available in "/etc/hostwatch.yml" and can
+# be referenced as "${env:variable_name}".
+#
+# This file should be owned by "root" and be given restrictive permissions
+# when it contains secrets such as AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY
+#
+#AWS_ACCESS_KEY_ID=...
+#AWS_SECRET_ACCESS_KEY=...

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+adduser \
+	--quiet \
+	--system \
+	--group \
+	--no-create-home \
+	--home /nonexistent \
+	--gecos "Hostwatch User" \
+		hostwatch

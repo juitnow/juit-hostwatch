@@ -1,0 +1,9 @@
+Package: juit-hostwatch
+Architecture: all
+Version: @@VERSION@@
+Priority: optional
+Section: utils
+Maintainer: Juit Developers <developers@juit.com>
+Homepage: https://github.com/juitnow/juit-hostwatch
+Depends: nodejs (>= 18.12.0)
+Description: Collect system and network metrics and send them to CloudWatch

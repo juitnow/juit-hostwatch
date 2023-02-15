@@ -1,0 +1,49 @@
+config:
+  # logLevel: INFO
+
+variables:
+  # hostname: foobar
+
+dimensions:
+  HostName: ${ hostname }
+
+probes:
+
+  # Basic CPU times
+  - probe: cpu
+    publish:
+      - CpuUserPerc
+      - CpuBusyPerc
+      - CpuIdlePerc
+
+  # Load Average
+  - probe: load
+    publish:
+      - Load1m
+      - LoadAverage1m
+
+  # Memory
+  - probe: memory
+
+  # Root drive
+  - probe: disk
+
+  # # Ping Cloudflare
+  # - probe: ping
+  #   config:
+  #     to: 1.1.1.1
+  #     interval: 10s
+  #   publish:
+  #     - PingLatency
+  #     - PingPacketLoss
+
+sinks:
+  # Dump all metrics to console
+  - sink: console
+
+  # # Send all metrics to AWS CloudWatch
+  # - sink: cloudwatch
+  #   config:
+  #     namespace: Infrastructure
+  #     accessKeyId: ${env:AWS_ACCESS_KEY_ID}
+  #     secretAccessKey: ${env:AWS_SECRET_ACCESS_KEY}

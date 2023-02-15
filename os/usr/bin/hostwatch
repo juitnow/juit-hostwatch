@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec /usr/bin/env node --enable-source-maps /usr/share/hostwatch/hostwatch.js "${@}"
