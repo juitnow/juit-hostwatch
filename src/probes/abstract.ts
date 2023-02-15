@@ -68,7 +68,7 @@ export abstract class AbstractProbe<
   }
 
   init(def: ProbeDefinition, sink: Sink): void {
-    super.initialize(def)
+    this.configure(def)
 
     // Remember our sink
     this._sink = sink
@@ -100,8 +100,12 @@ export abstract class AbstractProbe<
     this.log.debug(`Publishing ${this._publishing.size} metrics:`)
     this._publishing.forEach((m) => this.log.debug('-', m))
 
-    // Merge dimensions
-    this._dimensions = dimensions
+    // A "null" diversion value is used to override a default dimension. If
+    // we encounter one, we simply strip it out
+    const dims: Record<string, string> = this._dimensions = {}
+    Object.entries(dimensions).forEach(([ name, value ]) => {
+      if (name && value) dims[name] = value
+    })
   }
 
   protected abstract sample(): PollData<M> | Promise<PollData<M>>
