@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises'
 
-import { arrayOf, boolean, number, object, objectOf, oneOf, optional, string, validate } from 'justus'
+import { arrayOf, boolean, object, objectOf, oneOf, optional, string, validate } from 'justus'
 import { parse as parseYaml } from 'yaml'
 
 import { logger, logLevels } from './logger'
 import { Replacer } from './replacer'
+import { millis } from './seconds'
 
 import type { Config, ProbeDefinition, SinkDefinition } from '.'
 
@@ -14,14 +15,14 @@ const configValidator = object({
   logLevel: optional(oneOf(...logLevels), logger.logLevel),
   logTimes: optional(boolean({ fromString: true }), logger.logTimes),
   logColors: optional(boolean({ fromString: true }), logger.logColors),
-  pollInterval: optional(number({ fromString: true, minimum: 1_000, maximum: 120_000 }), 45_000),
+  pollInterval: optional(millis({ minimum: 1_000, maximum: 120_000, defaultUnit: 'seconds' }), '45 sec'),
 })
 
 const probeValidator = object({
   probe: string({ minLength: 1 }),
   name: optional(string({ minLength: 1 })),
   publish: optional(arrayOf(string), []),
-  dimensions: optional(objectOf(string), {}),
+  dimensions: optional(objectOf(oneOf(string, null)), {}),
   config: optional(object),
 })
 
