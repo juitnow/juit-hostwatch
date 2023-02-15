@@ -34,8 +34,8 @@ export abstract class AbstractComponent<V extends Validation> {
 
   protected initialize(def: { name?: string, config?: any }): void {
     if (def.name) {
-      this._log = logger(`${this._type}:${name}`)
-      this._name = name
+      this._log = logger(`${this._type}:${def.name}`)
+      this._name = def.name
     }
 
     const config = validate(this._validation, def.config)
