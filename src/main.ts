@@ -7,6 +7,7 @@ import { LoadProbe } from './probes/load'
 import { MemoryProbe } from './probes/memory'
 import { PingProbe } from './probes/ping'
 import { RegExpProbe } from './probes/regexp'
+import { AlcatelRouterProbe } from './probes/router'
 import { CloudWatchSink } from './sinks/cloudwatch'
 import { ConsoleSink } from './sinks/console'
 
@@ -80,6 +81,7 @@ async function start(file: string): Promise<RunningState> {
     let probe: Probe
 
     switch (type) {
+      case 'alcatel': probe = new AlcatelRouterProbe(); break
       case 'cpu': probe = new CPUProbe(); break
       case 'disk': probe = new DiskProbe(); break
       case 'load': probe = new LoadProbe(); break
