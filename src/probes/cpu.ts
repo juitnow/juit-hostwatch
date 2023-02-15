@@ -3,7 +3,8 @@ import { cpus } from 'node:os'
 import { never } from 'justus'
 
 import { Unit } from '../types'
-import { AbstractProbe, percent } from './abstract'
+import { AbstractProbe } from './abstract'
+import { percent } from '../utils/percent'
 
 import type { PollData } from './abstract'
 

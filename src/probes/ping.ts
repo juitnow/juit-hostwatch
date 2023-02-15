@@ -1,9 +1,10 @@
 import { createPinger } from '@juit/lib-ping'
 import { object, oneOf, optional, string } from 'justus'
 
-import { millis } from '../seconds'
 import { Unit } from '../types'
-import { AbstractProbe, percent } from './abstract'
+import { millis } from '../utils/milliseconds'
+import { percent } from '../utils/percent'
+import { AbstractProbe } from './abstract'
 
 import type { Pinger } from '@juit/lib-ping'
 import type { PollData } from './abstract'

@@ -3,8 +3,8 @@ import { STS } from '@aws-sdk/client-sts'
 import { fromEnv, fromInstanceMetadata } from '@aws-sdk/credential-providers'
 import { boolean, number, object, optional, string } from 'justus'
 
-import { Replacer } from '../replacer'
-import { millis } from '../seconds'
+import { millis } from '../utils/milliseconds'
+import { Replacer } from '../utils/replacer'
 import { AbstractSink } from './abstract'
 
 import type { MetricDatum } from '@aws-sdk/client-cloudwatch'

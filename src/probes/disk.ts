@@ -5,7 +5,8 @@ import { object, optional, string } from 'justus'
 
 
 import { Unit } from '../types'
-import { AbstractProbe, percentBig } from './abstract'
+import { percentBig } from '../utils/percent'
+import { AbstractProbe } from './abstract'
 
 import type { PollData } from './abstract'
 

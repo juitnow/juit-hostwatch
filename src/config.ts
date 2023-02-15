@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises'
 import { arrayOf, boolean, object, objectOf, oneOf, optional, string, validate } from 'justus'
 import { parse as parseYaml } from 'yaml'
 
-import { logger, logLevels } from './logger'
-import { Replacer } from './replacer'
-import { millis } from './seconds'
+import { logger, logLevels } from './utils/logger'
+import { millis } from './utils/milliseconds'
+import { Replacer } from './utils/replacer'
 
 import type { HostWatchDefinition } from './types'
 
