@@ -1,3 +1,5 @@
+import { hostname } from 'node:os'
+
 /** EC2 data is fetched only once, for all Replacers */
 const _metaDataEc2: Record<string, string> = {}
 
@@ -10,6 +12,7 @@ export class Replacer {
       if (key && value) env[key.toLowerCase()] = value
       return env
     }, {} as Record<string, string>)
+    this.setVariable('hostname', hostname())
   }
 
   setVariable(name: string, value: any): void {
