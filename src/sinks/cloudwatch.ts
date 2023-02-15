@@ -22,9 +22,9 @@ const validator = object({
   // The batch size of metrics to send, the docs says 1000 max, but we're conservative
   batchSize: optional(number({ minimum: 1, maximum: 500, fromString: true }), 500),
   // Threshold after which a metric will be discarded, if it failed sending
-  retryThreshold: optional(number({ minimum: 1.000, maximum: 300.000, fromString: true }), 120.000),
+  retryThreshold: optional(number({ minimum: 1_000, maximum: 300_000, fromString: true }), 120_000),
   // Interval after which batches of metrics will be sent
-  interval: optional(number({ minimum: 10.000, maximum: 120.000, fromString: true }), 30.000),
+  interval: optional(number({ minimum: 10_000, maximum: 120_000, fromString: true }), 30_000),
   // Access key, optional as we can also use credentials from EC2
   accessKeyId: optional(string({ minLength: 1 })),
   // Secret Access key, optional as we can also use credentials from EC2
@@ -78,6 +78,10 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     this._client = new CloudWatch({ credentials, region })
   }
 
+  async stop(): Promise<void> {
+    await this.publish()
+  }
+
   sink(metric: Metric): void {
     if (! this._options) throw new Error('CloudWatch Sink not configured')
     if (! this._client) throw new Error('CloudWatch Client not initialized')
@@ -92,11 +96,11 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
           .map(([ Name, Value ]) => ({ Name, Value })),
     })
 
-    this.log.trace('Buffered', length, 'metrics')
+    this.log.debug('Buffered', length, 'metrics')
 
     // If we reached the limit in our buffer, then immediately process
     if (length >= this._options.bufferSize) {
-      this.log.trace('Scheduling publication immedately')
+      this.log.debug(`Scheduling publication immedately (bufferSize=${this._options.bufferSize})`)
       setImmediate(() => this.publish())
       return
     }
@@ -105,8 +109,8 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     if (this._timeout != null) return
 
     // Schedule to process all buffered metrics in our interval time
-    this.log.trace('Scheduling publication in', this._options.interval, 'ms')
-    this._timeout = setTimeout(() => this.publish(), this._options.interval)
+    this.log.debug('Scheduling publication in', this._options.interval, 'ms')
+    this._timeout = setTimeout(() => this.publish(), this._options.interval).unref()
   }
 
   private async publish(): Promise<void> {
