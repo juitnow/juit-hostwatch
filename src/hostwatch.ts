@@ -2,15 +2,8 @@ import { ValidationErrorBuilder } from 'justus'
 
 import { Probes, Sinks } from './component'
 import { parse } from './config'
-import { AlcatelRouterProbe } from './probes/alcatel'
-import { CPUProbe } from './probes/cpu'
-import { DiskProbe } from './probes/disk'
-import { LoadProbe } from './probes/load'
-import { MemoryProbe } from './probes/memory'
-import { PingProbe } from './probes/ping'
-import { RegExpProbe } from './probes/regexp'
-import { CloudWatchSink } from './sinks/cloudwatch'
-import { ConsoleSink } from './sinks/console'
+import { createProbe } from './probes'
+import { createSink } from './sinks'
 import { logger } from './utils/logger'
 
 import type { Component, HostWatchDefinition, Probe, Sink } from './types'
@@ -50,16 +43,8 @@ export class HostWatch implements Component {
     const sinkInstances: Sink[] = []
     for (let i = 0; i < sinkDefinitions.length; i ++) {
       const def = sinkDefinitions[i]
-      const { sink: type } = def
       try {
-        let sink: Sink
-
-        switch (type) {
-          case 'console': sink = new ConsoleSink(); break
-          case 'cloudwatch': sink = new CloudWatchSink(); break
-          default: throw new Error(`Unknown sink "${type}"`)
-        }
-
+        const sink = createSink(def.sink)
         await sink.init(def)
         sinkInstances.push(sink)
       } catch (error) {
@@ -77,21 +62,8 @@ export class HostWatch implements Component {
     const probeInstances: Probe[] = []
     for (let i = 0; i < probeDefinitions.length; i ++) {
       const def = probeDefinitions[i]
-      const { probe: type } = def
-
       try {
-        let probe: Probe
-
-        switch (type) {
-          case 'alcatel': probe = new AlcatelRouterProbe(); break
-          case 'cpu': probe = new CPUProbe(); break
-          case 'disk': probe = new DiskProbe(); break
-          case 'load': probe = new LoadProbe(); break
-          case 'memory': probe = new MemoryProbe(); break
-          case 'ping': probe = new PingProbe(); break
-          case 'regexp': probe = new RegExpProbe(); break
-          default: throw new Error(`Unknown probe "${type}"`)
-        }
+        const probe = createProbe(def.probe)
 
         // merge dimensions for the probe
         def.dimensions = { ...def.dimensions, ...dimensions }

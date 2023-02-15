@@ -1,4 +1,4 @@
 export * from './hostwatch'
-export * from './probes/abstract'
-export * from './sinks/abstract'
-export * from './types'
+export * as probes from './probes'
+export * as sinks from './sinks'
+export * as types from './types'
