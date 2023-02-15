@@ -6,6 +6,31 @@ import { formatWithOptions } from 'node:util'
  * TYPES                                                                      *
  * ========================================================================== */
 
+const Level = {
+  'TRACE': 1,
+  'DEBUG': 2,
+  'INFO': 3,
+  'WARN': 4,
+  'ERROR': 5,
+  'FATAL': 6,
+  'OFF': 100,
+} as const
+
+type Level = (typeof Level)[keyof typeof Level]
+
+/* ========================================================================== */
+
+export type LogLevel = keyof typeof Level
+
+export const logLevels = Object.keys(Level)
+
+export interface LogFactory {
+  (tag: string): Logger
+  logLevel: LogLevel
+  logTimes: boolean
+  logColors: boolean
+}
+
 export interface Logger {
   trace(msg: string, ...args: any[]): void,
   debug(msg: string, ...args: any[]): void,
@@ -15,41 +40,13 @@ export interface Logger {
   fatal(msg: string, ...args: any[]): void,
 }
 
-enum LogLevel {
-  'TRACE' = 0,
-  'DEBUG' = 1,
-  'INFO' = 2,
-  'WARN' = 3,
-  'ERROR' = 4,
-  'FATAL' = 5,
-  'OFF' = Number.MAX_SAFE_INTEGER
-}
-
-type Level = keyof typeof LogLevel
-
-interface LogFactory {
-  (tag: string): Logger
-  logLevel: Level
-  logTimes: boolean
-  logColors: boolean
-}
-
 /* ========================================================================== *
  * DEFAULT OPTIONS                                                            *
  * ========================================================================== */
 
-function getBoolean(value: string | undefined, defaultValue: boolean): boolean {
-  if (! value) return defaultValue
-  switch (value = value.trim().toLowerCase()) {
-    case 'true': return true
-    case 'false': return false
-    default: return defaultValue
-  }
-}
-
-let logLevel = LogLevel[process.env.LOG_LEVEL as Level] || LogLevel.INFO
-let logTimes = getBoolean(process.env.LOG_TIMES, true)
-let logColors = getBoolean(process.env.LOG_COLORS, isatty(1))
+let logLevel: Level = Level.INFO
+let logTimes = isatty(1) // no TTY? we assume we're being run by systemd
+let logColors = isatty(1) // colorize (by default) only on TTYs
 
 /* ========================================================================== *
  * ACTUAL LOGGING IMPLEMENTATION                                              *
@@ -66,6 +63,7 @@ const RST = '\u001b[0m'
 
 /* Our log labels (colorised and not) */
 const labelsPlain = [
+  '[-----]',
   '[TRACE]',
   '[DEBUG]',
   '[INFO ]',
@@ -75,6 +73,7 @@ const labelsPlain = [
 ]
 
 const labelsColor = [
+  `${GRY}[-----]${GRY}`, // placeholder
   `${BLU}[TRACE]${RST}`, // trace, blue
   `${CYN}[DEBUG]${RST}`, // debug, cyan
   `${GRN}[INFO ]${RST}`, // info, green
@@ -95,11 +94,8 @@ function timestamp(): string {
       '.' + date.getMilliseconds().toString().padStart(3, '0')
 }
 
-function emit(level: LogLevel, tag: string, msg: string, ...args: any): void {
-  if (level < logLevel) {
-    console.log('NOT LOGGING', level, logLevel)
-    return
-  }
+function emit(level: Level, tag: string, msg: string, ...args: any): void {
+  if (level < logLevel) return
 
   const prefix: string[] = []
   if (logColors) {
@@ -118,9 +114,9 @@ function emit(level: LogLevel, tag: string, msg: string, ...args: any): void {
   const string = formatWithOptions({ colors: logColors }, msg, ...args)
   const final = string.replaceAll(/^/gm, pfx)
 
-  if (level >= LogLevel.ERROR) return console.error(final)
-  if (level >= LogLevel.WARN) return console.warn(final)
-  if (level >= LogLevel.INFO) return console.info(final)
+  if (level >= Level.ERROR) return console.error(final)
+  if (level >= Level.WARN) return console.warn(final)
+  if (level >= Level.INFO) return console.info(final)
   console.debug(final)
 }
 
@@ -129,19 +125,25 @@ function emit(level: LogLevel, tag: string, msg: string, ...args: any): void {
  * ========================================================================== */
 
 export const logger = ((tag: string): Logger => ({
-  trace: (msg: string, ...args: any[]): void => emit(LogLevel.TRACE, tag, msg, ...args),
-  debug: (msg: string, ...args: any[]): void => emit(LogLevel.DEBUG, tag, msg, ...args),
-  info: (msg: string, ...args: any[]): void => emit(LogLevel.INFO, tag, msg, ...args),
-  warn: (msg: string, ...args: any[]): void => emit(LogLevel.WARN, tag, msg, ...args),
-  error: (msg: string, ...args: any[]): void => emit(LogLevel.ERROR, tag, msg, ...args),
-  fatal: (msg: string, ...args: any[]): void => emit(LogLevel.FATAL, tag, msg, ...args),
+  trace: (msg: string, ...args: any[]): void => emit(Level.TRACE, tag, msg, ...args),
+  debug: (msg: string, ...args: any[]): void => emit(Level.DEBUG, tag, msg, ...args),
+  info: (msg: string, ...args: any[]): void => emit(Level.INFO, tag, msg, ...args),
+  warn: (msg: string, ...args: any[]): void => emit(Level.WARN, tag, msg, ...args),
+  error: (msg: string, ...args: any[]): void => emit(Level.ERROR, tag, msg, ...args),
+  fatal: (msg: string, ...args: any[]): void => emit(Level.FATAL, tag, msg, ...args),
 })) as LogFactory
 
 Object.defineProperties(logger, {
   logTimes: { get: () => logTimes, set: (t: boolean) => void (logTimes = !!t) },
   logColors: { get: () => logColors, set: (c: boolean) => void (logColors = !!c) },
   logLevel: {
-    get: () => LogLevel[logLevel] as Level || 'INFO',
-    set: (l: Level) => void (logLevel = LogLevel[l]),
+    set: (l: LogLevel) => void (logLevel = Level[l] || Level.INFO),
+    get: () => logLevel <= Level.TRACE ? 'TRACE' :
+               logLevel <= Level.DEBUG ? 'DEBUG' :
+               logLevel <= Level.INFO ? 'INFO' :
+               logLevel <= Level.WARN ? 'WARN' :
+               logLevel <= Level.ERROR ? 'ERROR' :
+               logLevel <= Level.FATAL ? 'FATAL' :
+               'OFF',
   },
 })
