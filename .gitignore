@@ -1,6 +1,7 @@
 *.tgz
 .coverage-data/
 .vscode/
+bundle/
 coverage/
 dist/
 native/build/
