@@ -7,7 +7,7 @@ import { logger, logLevels } from './logger'
 import { Replacer } from './replacer'
 import { millis } from './seconds'
 
-import type { Config, ProbeDefinition, SinkDefinition } from '.'
+import type { HostWatchDefinition } from '.'
 
 const log = logger('config')
 
@@ -33,25 +33,20 @@ const sinkValidator = object({
 })
 
 const validator = object({
-  config: optional(configValidator, {}),
-  variables: optional(object, {}),
-  dimensions: optional(objectOf(string), {}),
+  config: optional(oneOf(configValidator, null), {}),
+  variables: optional(oneOf(object, null), {}),
+  dimensions: optional(oneOf(objectOf(string), null), {}),
   probes: arrayOf(probeValidator),
   sinks: arrayOf(sinkValidator),
 })
 
-export interface ParsedConfig {
-  config: Config,
-  dimensions: Record<string, string>,
-  probes: ProbeDefinition[],
-  sinks: SinkDefinition[],
-}
-
-export async function parse(file: string): Promise<ParsedConfig> {
+export async function parse(file: string): Promise<HostWatchDefinition> {
   const text = await readFile(file, 'utf-8')
   const data = parseYaml(text)
 
-  const { variables, ...options } = validate(validator, data)
+  const { variables, ...options } = validate(validator, data, {
+    stripOptionalNulls: true,
+  })
 
   const replacer = new Replacer()
   const vars = await replacer.replace(variables, true)
@@ -64,10 +59,18 @@ export async function parse(file: string): Promise<ParsedConfig> {
   ])
 
   log.debug('Known variables:')
-  Object.entries(vars).forEach(([ name, value ]) => log.debug('- %s =>', name, value))
+  const vlen = Object.keys(vars).reduce((l, s) => s.length > l ? s.length : l, 0)
+  Object.entries(vars).forEach(([ name, value ], i, a) => {
+    const [ line, dash ] = (i + 1) == a.length ? [ ' \u2514\u2500', '\u2500' ] : [ ' \u2502 ', ' ' ]
+    log.debug(line + `   ${name}`.padStart(vlen + 3, dash), '=>', value)
+  })
 
   log.info('Global dimensions:')
-  Object.entries(dimensions).forEach(([ name, value ]) => log.info('- %s =>', name, value))
+  const dlen = Object.keys(dimensions).reduce((l, s) => s.length > l ? s.length : l, 0)
+  Object.entries(dimensions).forEach(([ name, value ], i, a) => {
+    const [ line, dash ] = (i + 1) == a.length ? [ ' \u2514\u2500', '\u2500' ] : [ ' \u2502 ', ' ' ]
+    log.info(line + `   ${name}`.padStart(dlen + 3, dash), '=>', value)
+  })
 
   log.info('Probes configured:', probes.length)
   log.info('Sinks configured:', sinks.length)
