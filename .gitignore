@@ -1,3 +1,4 @@
+*.deb
 *.tgz
 .coverage-data/
 .vscode/
