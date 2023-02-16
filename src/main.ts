@@ -24,6 +24,10 @@ async function main(options: MainOptions): Promise<void> {
 
   function stop(): void {
     log.info('Stopping...')
+
+    process.off('SIGINT', stop)
+    process.off('SIGTERM', stop)
+
     setTimeout(() => process.exit(2), 5000).unref()
     hostwatch.stop() .then(() => {
       log.info('HostWatch stopped, goodbye...')
