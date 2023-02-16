@@ -76,7 +76,7 @@ export class HostWatch implements Component {
         const probe = createProbe(def.probe)
 
         // merge dimensions for the probe
-        def.dimensions = { ...def.dimensions, ...dimensions }
+        def.dimensions = { ...dimensions, ...def.dimensions }
 
         // initialize and push
         await probe.init(def, sinks)
