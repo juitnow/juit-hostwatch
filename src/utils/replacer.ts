@@ -81,6 +81,7 @@ export class Replacer {
     }
   }
 
+  async replace<T = any>(value: T, setVariables?: boolean): Promise<T>
   async replace(value: any, setVariables = false): Promise<any> {
     if (typeof value === 'string') {
       for (let match = value.match(/^\${([^}]+)}$/); match != null; match = null) {
