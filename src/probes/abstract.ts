@@ -8,7 +8,7 @@ export interface ProbeMetrics {
 }
 
 export type PollData<Metrics extends ProbeMetrics> = {
-  [ key in keyof Metrics ]?: number | undefined
+  [ key in keyof Metrics ]?: number
 }
 
 export abstract class AbstractProbe<
@@ -45,8 +45,8 @@ export abstract class AbstractProbe<
         const metrics = await this.sample()
         for (const [ name, value ] of Object.entries(metrics)) {
           // Strip metrics with no valid numerical value
-          if ((value == null) || isNaN(value)) {
-            this.log.trace('Invalid metric value', name, '=>', value)
+          if ((value == null) || (! isFinite(value))) {
+            this.log.debug('Invalid metric value', name, '=>', value)
             continue
           }
 
