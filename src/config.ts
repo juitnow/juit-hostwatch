@@ -15,7 +15,7 @@ const configValidator = object({
   logLevel: optional(oneOf(...logLevels)),
   logTimes: optional(boolean({ fromString: true })),
   logColors: optional(boolean({ fromString: true })),
-  pollInterval: optional(millis({ minimum: 1_000, maximum: 120_000, defaultUnit: 'seconds' }), '45 sec'),
+  pollInterval: optional(millis({ minimum: 1_000, maximum: 120_000, defaultUnit: 'seconds' }), '30 sec'),
 })
 
 const probeValidator = object({
