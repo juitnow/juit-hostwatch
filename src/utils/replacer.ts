@@ -1,5 +1,7 @@
 import { hostname } from 'node:os'
 
+import { simpleFetch } from './fetch'
+
 /** EC2 data is fetched only once, for all Replacers */
 const _metaDataEc2: Record<string, string> = {}
 
@@ -65,12 +67,8 @@ export class Replacer {
       case 'ec2':
         if (expr in _metaDataEc2) return _metaDataEc2[expr]
         try {
-          const from = `http://169.254.169.254/latest/meta-data/${expr}`
-          const response = await fetch(from)
-          if (response.status !== 200) {
-            throw new Error(`Error fetching ${from} (status=${response.status})`)
-          }
-          return _metaDataEc2[expr] = await response.text()
+          const url = `http://169.254.169.254/latest/meta-data/${expr}`
+          return _metaDataEc2[expr] = await simpleFetch(url)
         } catch (error: any) {
           throw new Error(`Error getting EC2 metadata for "${expr}"`, { cause: error })
         }

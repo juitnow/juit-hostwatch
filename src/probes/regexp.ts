@@ -5,6 +5,7 @@ import { array, object, oneOf, optional, string, url } from 'justus'
 
 import { units } from '../types'
 import { AbstractProbe } from './abstract'
+import { simpleFetch } from '../utils/fetch'
 
 import type { PollData, ProbeMetrics } from './abstract'
 
@@ -27,6 +28,7 @@ const metricValidator = object({
 
 const validator = object({
   source: url,
+  options: optional(object), // any options for NodeJS' "request" (such as localAddress!)
   metrics: array({ items: metricValidator, minItems: 1 }),
 })
 
@@ -49,18 +51,14 @@ export class RegExpProbe extends AbstractProbe<ProbeMetrics, typeof validator> {
   protected async sample(): Promise<PollData<ProbeMetrics>> {
     if (! this.configuration) throw new Error('RegexProbe not initialized')
 
-    const { source, metrics } = this.configuration
+    const { source, metrics, options } = this.configuration
 
     let data: string
     if (source.protocol === 'file:') {
       const file = fileURLToPath(source)
       data = await readFile(file, 'utf-8')
     } else {
-      const response = await fetch(source)
-      if (response.status !== 200) {
-        throw new Error(`Error fetching ${source} (status=${response.status})`)
-      }
-      data = await response.text()
+      data = await simpleFetch(source.href, options || undefined)
     }
 
     this.log.trace('Read', source)
