@@ -6,7 +6,7 @@ import { createProbe } from './probes'
 import { createSink } from './sinks'
 import { logger } from './utils/logger'
 
-import type { Component, HostWatchDefinition, Probe, Sink } from './types'
+import type { Component, Configuration, HostWatchDefinition, Probe, Sink } from './types'
 
 const log = logger('main')
 
@@ -18,8 +18,13 @@ interface HostWatchState {
 }
 
 export class HostWatch implements Component {
+  private _overrides: Partial<Configuration>
   private _state?: HostWatchState
   private _timer?: NodeJS.Timer
+
+  constructor(overrides: Partial<Configuration> = {}) {
+    this._overrides = overrides
+  }
 
   async init(file: string): Promise<void>
   async init(definition: HostWatchDefinition): Promise<void>
@@ -33,10 +38,13 @@ export class HostWatch implements Component {
       probes: probeDefinitions,
     } = typeof arg === 'string' ? await parse(arg) : arg
 
+    // merge config with overrides
+    const configuration: Configuration = { ...config, ...this._overrides }
+
     // logger configuration
-    logger.logLevel = config.logLevel
-    logger.logTimes = config.logTimes
-    logger.logColors = config.logColors
+    if (configuration.logLevel !== undefined) logger.logLevel = configuration.logLevel
+    if (configuration.logTimes !== undefined) logger.logTimes = configuration.logTimes
+    if (configuration.logColors !== undefined) logger.logColors = configuration.logColors
 
     // validation error builder for sub configurations
     const errorBuilder = new ValidationErrorBuilder()
@@ -85,7 +93,7 @@ export class HostWatch implements Component {
     const probes = new Probes(probeInstances)
 
     // store the state
-    this._state = { sinks, probes, interval: config.pollInterval }
+    this._state = { sinks, probes, interval: configuration.pollInterval }
   }
 
   async start(): Promise<void> {
