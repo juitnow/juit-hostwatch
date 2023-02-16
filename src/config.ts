@@ -12,9 +12,9 @@ import type { HostWatchDefinition } from './types'
 const log = logger('config')
 
 const configValidator = object({
-  logLevel: optional(oneOf(...logLevels), logger.logLevel),
-  logTimes: optional(boolean({ fromString: true }), logger.logTimes),
-  logColors: optional(boolean({ fromString: true }), logger.logColors),
+  logLevel: optional(oneOf(...logLevels)),
+  logTimes: optional(boolean({ fromString: true })),
+  logColors: optional(boolean({ fromString: true })),
   pollInterval: optional(millis({ minimum: 1_000, maximum: 120_000, defaultUnit: 'seconds' }), '45 sec'),
 })
 
