@@ -6,6 +6,8 @@ import { AbstractProbe } from './abstract'
 
 import type { PollData } from './abstract'
 
+const ONE_GIGABYTE = 1073741824
+
 const metrics = {
   TotalNetworkIn: Unit.Bytes,
   TotalNetworkOut: Unit.Bytes,
@@ -73,6 +75,11 @@ export class AlcatelRouterProbe extends AbstractProbe<typeof metrics, typeof val
       const seconds = (timestamp - this._status.timestamp) / 1000
       bandwidthOut = (bytesOut - this._status.bytesOut) / seconds
       bandwidthIn = (bytesIn - this._status.bytesIn) / seconds
+
+      // interface traffic data jumps (large swings of > 10s gigabytes)... if
+      // we see some unreasonable number, let's simply give up and push a NaN!
+      if ((bandwidthIn > ONE_GIGABYTE) || (bandwidthIn < 0)) bandwidthIn = NaN
+      if ((bandwidthOut > ONE_GIGABYTE) || (bandwidthOut < 0)) bandwidthOut = NaN
     }
 
     this._status = { timestamp, bytesIn, bytesOut }
