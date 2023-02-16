@@ -22,7 +22,7 @@ type Level = (typeof Level)[keyof typeof Level]
 
 export type LogLevel = keyof typeof Level
 
-export const logLevels = Object.keys(Level)
+export const logLevels = Object.keys(Level) as LogLevel[]
 
 export interface LogFactory {
   (tag: string): Logger
