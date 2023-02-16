@@ -17,6 +17,7 @@ const metrics = {
 const validator = object({
   to: string({ minLength: 1 }),
   from: optional(string({ minLength: 1 })),
+  source: optional(string({ minLength: 1 })),
   interval: optional(millis({ minimum: 1000, defaultUnit: 'seconds' }), '5 sec'),
   timeout: optional(millis({ minimum: 1000, defaultUnit: 'seconds' }), '30 sec'),
   protocol: optional(oneOf('ipv4', 'ipv6')),
