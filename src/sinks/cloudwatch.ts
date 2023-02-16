@@ -11,6 +11,9 @@ import type { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import type { AwsCredentialIdentityProvider } from '@aws-sdk/types'
 import type { Metric } from '../types'
 
+const HARD_MAX = Math.pow(2, 360)
+const HARD_MIN = -HARD_MAX
+
 
 const validator = object({
   // The namespace of our metrics, _must_ exist
@@ -24,7 +27,7 @@ const validator = object({
   // Threshold after which a metric will be discarded, if it failed sending
   retryThreshold: optional(millis({ minimum: 1_000, maximum: 300_000, defaultUnit: 'seconds' }), '2 min'),
   // Interval after which batches of metrics will be sent
-  interval: optional(millis({ minimum: 10_000, maximum: 120_000, defaultUnit: 'seconds' }), '30 sec'),
+  interval: optional(millis({ minimum: 10_000, maximum: 120_000, defaultUnit: 'seconds' }), '10 sec'),
   // Access key, optional as we can also use credentials from EC2
   accessKeyId: optional(string({ minLength: 1 })),
   // Secret Access key, optional as we can also use credentials from EC2
@@ -77,9 +80,17 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     if (this._client) await this.publish()
   }
 
-  sink(metric: Metric): void {
+  sink(_metric: Metric): void {
     if (! this.configuration) throw new Error('CloudWatch Sink not configured')
     if (! this._client) throw new Error('CloudWatch Client not initialized')
+
+    // Expand our values
+    const { timestamp, name, unit, value, dimensions } = _metric
+
+    if ((! isFinite(value)) || (value > HARD_MAX) || (value < HARD_MIN)) {
+      this.log.warn(`Ignoring invalid metric value for "${name}:`, value)
+      return
+    }
 
     // Convert the metric to a CludWatch `MetricDatum` and buffer it. Here we
     // don't aggregate multiple data points per minute, as CloudWatch will
@@ -87,11 +98,11 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
     // number of samples sent for us.
     // See https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/publishingMetrics.html#publishingDataPoints1
     const length = this._metrics.push({
-      Timestamp: new Date(metric.timestamp),
-      MetricName: metric.name,
-      Unit: metric.unit,
-      Value: metric.value,
-      Dimensions: Object.entries(metric.dimensions)
+      Timestamp: new Date(timestamp),
+      MetricName: name,
+      Unit: unit,
+      Value: value,
+      Dimensions: Object.entries(dimensions)
           .map(([ Name, Value ]) => ({ Name, Value })),
     })
 
