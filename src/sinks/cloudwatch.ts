@@ -60,10 +60,12 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
       credentials = fromEnv()
     }
 
+    if (! region) throw new Error('AWS region is missing')
+
     try {
       const stsClient = new STS({ credentials, region })
       const { Arn } = await stsClient.getCallerIdentity({})
-      this.log.debug('AWS caller identified as', Arn)
+      this.log.info('AWS caller identified as', Arn)
     } catch (cause) {
       throw new Error('Unable to validate AWS caller identity', { cause })
     }
@@ -72,7 +74,7 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
   }
 
   async stop(): Promise<void> {
-    await this.publish()
+    if (this._client) await this.publish()
   }
 
   sink(metric: Metric): void {
