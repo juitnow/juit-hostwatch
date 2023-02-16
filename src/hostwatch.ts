@@ -8,6 +8,8 @@ import { logger } from './utils/logger'
 
 import type { Component, HostWatchDefinition, Probe, Sink } from './types'
 
+const log = logger('main')
+
 // our state: probes, sinks and poller interval
 interface HostWatchState {
   interval: number,
@@ -97,8 +99,12 @@ export class HostWatch implements Component {
       await sinks.start()
       await probes.start()
     } catch (error) {
-      await sinks.stop()
-      await probes.stop()
+      try {
+        await probes.stop()
+        await sinks.stop()
+      } catch (error2) {
+        log.warn('Error stopping after encountering a start error', error)
+      }
       throw error
     }
 
