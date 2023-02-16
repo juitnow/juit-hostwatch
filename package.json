@@ -3,10 +3,12 @@
   "version": "0.0.1",
   "scripts": {
     "build": "plug",
-    "dev": "plug -w test -w src"
+    "bundle": "plug bundle",
+    "dev": "plug coverage -w test -w src"
   },
   "devDependencies": {
-    "@plugjs/build": "^0.1.0"
+    "@plugjs/build": "^0.1.0",
+    "@types/yargs-parser": "^21.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.267.0",
@@ -17,6 +19,7 @@
     "@juit/lib-statvfs": "file:../juit-lib-statvfs/juit-lib-statvfs-1.0.0.tgz",
     "@juit/lib-tcl-router": "file:../juit-lib-tcl-router/juit-lib-tcl-router-1.0.0.tgz",
     "justus": "^0.1.5",
-    "yaml": "^2.2.1"
+    "yaml": "^2.2.1",
+    "yargs-parser": "^21.1.1"
   }
 }
