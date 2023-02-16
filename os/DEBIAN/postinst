@@ -8,3 +8,5 @@ adduser \
 	--home /nonexistent \
 	--gecos "Hostwatch User" \
 		hostwatch
+
+systemctl daemon-reload
