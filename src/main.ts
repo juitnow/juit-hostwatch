@@ -1,5 +1,5 @@
-import { detailed as yargs } from 'yargs-parser'
 import { ValidationError } from 'justus'
+import yargs from 'yargs-parser'
 
 import { HostWatch } from './hostwatch'
 import { logger } from './utils/logger'
@@ -55,7 +55,7 @@ function help(exitCode = 0): never {
 }
 
 /* Parse command line arguments */
-const args = yargs(process.argv.slice(2), {
+const args = yargs.detailed(process.argv.slice(2), {
   configuration: { 'strip-aliased': true },
   alias: {
     help: [ 'h' ],
