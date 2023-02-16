@@ -46,9 +46,9 @@ export type Unit = (typeof Unit)[keyof typeof Unit]
 export const units = Object.values(Unit)
 
 export interface Configuration {
-  logLevel: LogLevel,
-  logTimes: boolean,
-  logColors: boolean,
+  logLevel?: LogLevel | undefined,
+  logTimes?: boolean | undefined,
+  logColors?: boolean | undefined,
   pollInterval: number,
 }
 
