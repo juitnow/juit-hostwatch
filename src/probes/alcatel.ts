@@ -4,6 +4,7 @@ import { object, optional, string } from 'justus'
 import { Unit } from '../types'
 import { AbstractProbe } from './abstract'
 
+import type { AlcatelClientBasicStatus } from '@juit/lib-tcl-router'
 import type { PollData } from './abstract'
 
 const ONE_GIGABYTE = 1073741824
@@ -26,7 +27,7 @@ const metrics = {
 const validator = object({
   hostname: string({ minLength: 1 }),
   username: optional(string({ minLength: 1 })),
-  password: string({ minLength: 1 }),
+  password: optional(string({ minLength: 1 })),
 })
 
 interface Status {
@@ -38,6 +39,7 @@ interface Status {
 export class AlcatelRouterProbe extends AbstractProbe<typeof metrics, typeof validator> {
   private _client?: AlcatelClient
   private _status?: Status
+  private _extended?: boolean
 
   constructor() {
     super('load', metrics, validator)
@@ -46,8 +48,11 @@ export class AlcatelRouterProbe extends AbstractProbe<typeof metrics, typeof val
   async start(): Promise<void> {
     const { hostname, username: userName, password } = this.configuration
     this._client = new AlcatelClient(hostname, password, { userName })
+    this._extended = !! password
     try {
-      const status = await this._client.poll()
+      const status = this._extended ?
+        await this._client.pollExtended() :
+        await this._client.pollBasic()
       this.log.debug(`Successfully connected to "${status.device}" at ${hostname}`)
     } catch (cause) {
       throw new Error(`Error contacting router at "${hostname}"`, { cause })
@@ -57,15 +62,19 @@ export class AlcatelRouterProbe extends AbstractProbe<typeof metrics, typeof val
   protected async sample(): Promise<PollData<typeof metrics>> {
     if (! this._client) throw new Error('TclRouter probe not initialized')
 
-    const status = await this.poll()
-    this.log.trace('Status from router', status)
+    if (! this._extended) {
+      const status = await this._client.pollBasic()
+      return {
+        ConnectionStatus: getConnectionStatus(status.connection_status),
+        NetworkType: getNetworkType(status.network_type),
+        SignalStrength: status.strength,
+      }
+    }
 
     const {
       bytes_in: bytesIn,
       bytes_out: bytesOut,
-      network_type: networkTypeString,
-      connection_status: connectionStatusString,
-      ...data } = await this._client.poll()
+      ...data } = await this._client.pollExtended()
     const timestamp = Date.now()
 
     let bandwidthIn: number = NaN
@@ -84,45 +93,45 @@ export class AlcatelRouterProbe extends AbstractProbe<typeof metrics, typeof val
 
     this._status = { timestamp, bytesIn, bytesOut }
 
-    // number of "G"s: 0 no service, 2 2G, ... 4.5 4G+, 5 5G
-    let networkType: number
-    switch (networkTypeString) {
-      case 'No Service': networkType = 0; break
-      case '2G': networkType = 2; break
-      case '3G': networkType = 3; break
-      case '3G+': networkType = 3.5; break
-      case '4G': networkType = 4; break
-      case '4G+': networkType = 4.5; break
-      case '5G': networkType = 5; break
-      case 'Unknown':
-      default:
-        networkType = NaN
-    }
-
-    // -1 disconnecting, 0 disconnected, 1 connecting, 2 connected
-    let connectionStatus: number
-    switch (connectionStatusString) {
-      case 'Disconnecting': connectionStatus = -1; break
-      case 'Disconnected': connectionStatus = 0; break
-      case 'Connecting': connectionStatus = 1; break
-      case 'Connected': connectionStatus = 2; break
-      case 'Unknown':
-      default:
-        connectionStatus = NaN; break
-    }
-
     return {
       TotalNetworkIn: bytesIn,
       TotalNetworkOut: bytesOut,
       BandwidthNetworkIn: bandwidthIn,
       BandwidthNetworkOut: bandwidthOut,
-      ConnectionStatus: connectionStatus,
-      NetworkType: networkType,
+      ConnectionStatus: getConnectionStatus(data.connection_status),
+      NetworkType: getNetworkType(data.network_type),
       SignalStrength: data.strength,
       SignalRSSI: data.rssi,
       SignalRSRP: data.rsrp,
       SignalSINR: data.sinr,
       SignalRSRQ: data.rsrq,
     }
+  }
+}
+
+/** Number of "G"s: 0 no service, 2 2G, ... 4.5 4G+, 5 5G */
+function getNetworkType(type: AlcatelClientBasicStatus['network_type']): number {
+  switch (type) {
+    case 'No Service': return 0
+    case '2G': return 2
+    case '3G': return 3
+    case '3G+': return 3.5
+    case '4G': return 4
+    case '4G+': return 4.5
+    case '5G': return 5
+    case 'Unknown':
+    default: return NaN
+  }
+}
+
+/** Connection status: -1 disconnecting, 0 disconnected, 1 connecting, 2 connected */
+function getConnectionStatus(status: AlcatelClientBasicStatus['connection_status']): number {
+  switch (status) {
+    case 'Disconnecting': return -1
+    case 'Disconnected': return 0
+    case 'Connecting': return 1
+    case 'Connected': return 2
+    case 'Unknown':
+    default: return NaN
   }
 }
