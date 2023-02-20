@@ -17,8 +17,8 @@
     "@aws-sdk/types": "^3.272.0",
     "@juit/lib-ping": "^1.0.0",
     "@juit/lib-statvfs": "^1.0.0",
-    "@juit/lib-tcl-router": "^1.0.0",
-    "justus": "^0.1.5",
+    "@juit/lib-tcl-router": "^1.1.0",
+    "justus": "^0.1.6",
     "yaml": "^2.2.1",
     "yargs-parser": "^21.1.1"
   }
