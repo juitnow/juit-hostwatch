@@ -1,9 +1,6 @@
 import { hostname } from 'node:os'
 
-import { simpleFetch } from './fetch'
-
-/** EC2 data is fetched only once, for all Replacers */
-const _metaDataEc2: Record<string, string> = {}
+import { getMetaData } from './ec2'
 
 export class Replacer {
   private readonly _env: Readonly<Record<string, string>>
@@ -65,13 +62,7 @@ export class Replacer {
       // coverage ignore next
       // see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html
       case 'ec2':
-        if (expr in _metaDataEc2) return _metaDataEc2[expr]
-        try {
-          const url = `http://169.254.169.254/latest/meta-data/${expr}`
-          return _metaDataEc2[expr] = await simpleFetch(url)
-        } catch (error: any) {
-          throw new Error(`Error getting EC2 metadata for "${expr}"`, { cause: error })
-        }
+        return getMetaData(data)
 
       default: {
         throw new TypeError(`Unsupported type "${type}" in expression "${expr}"`)

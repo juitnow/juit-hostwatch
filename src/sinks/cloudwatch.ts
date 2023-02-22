@@ -3,8 +3,8 @@ import { STS } from '@aws-sdk/client-sts'
 import { fromEnv, fromInstanceMetadata } from '@aws-sdk/credential-providers'
 import { boolean, number, object, optional, string } from 'justus'
 
+import { getMetaData } from '../utils/ec2'
 import { millis } from '../utils/milliseconds'
-import { Replacer } from '../utils/replacer'
 import { AbstractSink } from './abstract'
 
 import type { MetricDatum } from '@aws-sdk/client-cloudwatch'
@@ -56,7 +56,7 @@ export class CloudWatchSink extends AbstractSink<typeof validator> {
 
     if (this.configuration.ec2Credentials === true) {
       credentials = fromInstanceMetadata()
-      if (! region) region = await new Replacer().getReplacement('ec2:placement/region') as string
+      if (! region) region = await getMetaData('placement/region') as string
     } else {
       if (this.configuration.accessKeyId) process.env.AWS_ACCESS_KEY_ID = this.configuration.accessKeyId
       if (this.configuration.secretAccessKey) process.env.AWS_SECRET_ACCESS_KEY = this.configuration.secretAccessKey
