@@ -19,7 +19,7 @@
     "@juit/lib-statvfs": "^1.0.0",
     "@juit/lib-tcl-router": "^1.1.0",
     "justus": "^0.1.6",
-    "yaml": "^2.2.1",
+    "yaml": "^2.2.2",
     "yargs-parser": "^21.1.1"
   }
 }
